@@ -4,7 +4,7 @@
 import pygame
 
 # Code additionnel
-from bomb import Bomb
+from game.bombs.bomb import Bomb
 
 # créer la classe joueur
 class Player(pygame.sprite.Sprite):

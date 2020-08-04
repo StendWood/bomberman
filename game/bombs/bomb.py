@@ -2,10 +2,10 @@
 
 # IMPORTS
 import pygame
-from projectile import Projectile
+from game.bombs.projectile import Projectile
 
 # Code additionnel
-from toolbox import set_timeout
+from game.toolbox import set_timeout
 
 class Bomb(pygame.sprite.Sprite):
     """

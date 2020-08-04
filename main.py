@@ -6,7 +6,7 @@ import random
 import pygame
 
 # Code additionel
-from game import Game
+from game.game import Game
 
 
 # Initialise Pygame
@@ -29,22 +29,22 @@ font = pygame.font.SysFont('Bahnschrift', 30)
 replay_text = font.render("Replay", True, (255, 255, 255))
 
 # importer la bannier
-banner = pygame.image.load('assets/bg_nav.png')
+banner = pygame.image.load('assets/bg/bg_nav.png')
 banner = pygame.transform.scale(banner, screen.get_size())
 
 # importer les boutons nav
-button_2 = pygame.image.load('assets/button_player_2.png')
-button_3 = pygame.image.load('assets/button_player_3.png')
-button_4 = pygame.image.load('assets/button_player_4.png')
+button_2 = pygame.image.load('assets/button/button_player_2.png')
+button_3 = pygame.image.load('assets/button/button_player_3.png')
+button_4 = pygame.image.load('assets/button/button_player_4.png')
 # Change la taille des boutons pour
 button_2 = pygame.transform.scale(button_2, (ceil(screen.get_width() / 5.5), ceil(screen.get_height() / 6)))
 button_3 = pygame.transform.scale(button_3, (ceil(screen.get_width() / 5.5), ceil(screen.get_height() / 6)))
 button_4 = pygame.transform.scale(button_4, (ceil(screen.get_width() / 5.5), ceil(screen.get_height() / 6)))
 
 # Importer les shadows des boutons nav
-button_2_shadow = pygame.image.load('assets/button_player_shadow.png')
-button_3_shadow = pygame.image.load('assets/button_player_shadow.png')
-button_4_shadow = pygame.image.load('assets/button_player_shadow.png')
+button_2_shadow = pygame.image.load('assets/button/button_player_shadow.png')
+button_3_shadow = pygame.image.load('assets/button/button_player_shadow.png')
+button_4_shadow = pygame.image.load('assets/button/button_player_shadow.png')
 button_2_shadow = pygame.transform.scale(button_2_shadow, (ceil(screen.get_width() / 5.5), ceil(screen.get_height() / 6)))
 button_3_shadow = pygame.transform.scale(button_3_shadow, (ceil(screen.get_width() / 5.5), ceil(screen.get_height() / 6)))
 button_4_shadow = pygame.transform.scale(button_4_shadow, (ceil(screen.get_width() / 5.5), ceil(screen.get_height() / 6)))
@@ -60,6 +60,12 @@ button_2_rect.y = ceil(screen.get_height() / 2.8)
 button_3_rect.y = ceil(screen.get_height() / 1.76)
 button_4_rect.y = ceil(screen.get_height() / 1.3)
 
+# créer les fond de victoire ou defaite
+win_bg = pygame.image.load('assets/bg/win_bg.jpg')
+game_over_bg = pygame.image.load('assets/bg/game_over_bg.jpg')
+# Change la taille des boutons pour
+win_bg = pygame.transform.scale(win_bg, (screen.get_width(), screen.get_height()))
+game_over_bg = pygame.transform.scale(game_over_bg, (screen.get_width(), screen.get_height()))
 
 # le jeux est en cours
 running = True
@@ -79,8 +85,17 @@ music_lost = False
 end_game_win = False
 end_game_lost = False
 
+
 # Créer le bouton replay
 button_replay = pygame.draw.rect(screen, (74, 85, 102), (630, 645, 110, 50))
+
+# créer la liste pour la manette
+joysticks = []
+
+# créer les mannette
+for index in range(pygame.joystick.get_count()):
+    joysticks.append(pygame.joystick.Joystick(index))
+    joysticks[-1].init()
 
 # Boucle tant que running est vrai
 while running:
@@ -119,20 +134,21 @@ while running:
         # Refresh l'affichage
         game.update(screen)
 
-        # Conditions de victoire
-        if len(game.all_players) == 1 or game.timer <= 0:
-            # Stop la musique du jeu
-            music_game = False
-            pygame.mixer.music.stop()
-            # Stop la partie
-            game_status = False
+        if game.avatar_set:
+            # Conditions de victoire
+            if len(game.all_players) < 2 or game.timer <= 0:
+                # Stop la musique du jeu
+                music_game = False
+                pygame.mixer.music.stop()
+                # Stop la partie
+                game_status = False
 
-            if len(game.all_players) == 1:
-                # Déclare la fin de partie
-                end_game_win = True
-            elif game.timer <= 0:
-                # Déclare la fin de partie
-                end_game_lost = True
+                if len(game.all_players) == 1:
+                    # Déclare la fin de partie
+                    end_game_win = True
+                elif game.timer <= 0 or len(game.all_players) < 1:
+                    # Déclare la fin de partie
+                    end_game_lost = True
 
 
     if end_game_win and not music_win and not music_lost:
@@ -150,15 +166,15 @@ while running:
         else:
             pygame.mixer.music.set_volume(0.06)
         # Affiche l'écran de victoire
-        # Fond noir
-        screen.fill((0, 0, 0))
+        screen.blit(win_bg, (0, 0))
+        
         for player in game.players:
             # Regarde dans la liste de joueur celui qui est vivant
             if player.alive():
                 # Le joueur est vivant, récupére son image
-                winner = player.image
+                winner = player.image_win
         # Affiche l'avatar du gagnant
-        screen.blit(winner, (screen.get_width() / 2.1, screen.get_height() / 2.1))
+        screen.blit(winner, (50, 200))
         # Affiche le bouton replay
         pygame.draw.rect(screen, (74, 85, 102), (620, 645, 110, 50))
         screen.blit(replay_text, (630, 650))
@@ -173,8 +189,7 @@ while running:
         # Fond noir
         screen.fill((0, 0, 0))
         # Affiche l'écran de défaite
-        game_over = pygame.image.load("assets/game_over.jpg")
-        screen.blit(game_over, (35, 0))
+        screen.blit(game_over_bg, (0, 0))
         # Affiche le bouton replay
         pygame.draw.rect(screen, (74, 85, 102), (620, 645, 110, 50))
         screen.blit(replay_text, (630, 650))
@@ -200,38 +215,74 @@ while running:
             # je def le nombre de joueur
             
             if button_2_rect.collidepoint(event.pos):
-                game_status = True
+                # Déclare le nombre de joueurs
                 nb_joueur = 2
+                # Déclare i pour le choix d'avatar
+                i = 0
             elif button_3_rect.collidepoint(event.pos):
-                game_status = True
+                # Déclare le nombre de joueurs
                 nb_joueur = 3
+                # Déclare i pour le choix d'avatar
+                i = 0
             elif button_4_rect.collidepoint(event.pos):
-                game_status = True
+                # Déclare le nombre de joueurs
                 nb_joueur = 4
+                # Déclare i pour le choix d'avatar
+                i = 0
                 
+            # je check que game status est ok et si oui si on click sur un avatar sa lance la game
+            if game_status:
+                # Game est lancé
+                if not game.avatar_set:
+                    # Les avatars ne sont pas choisis
+                    # Affiche le joueur qui choisis
+                    for avatar in game.all_avatar:
+                        if avatar.rect.collidepoint(event.pos):
+                            # Le joueur clic sur un avatar
+                            # Change l'avatar du joueur sélectionné
+                            game.players[i].image = avatar.image
+                            # Change l'image de l'avatar quand il win
+                            game.players[i].image_win = avatar.image_win
+                            # Change la taille de l'avatar
+                            game.players[i].image = pygame.transform.scale(game.players[i].image, (40, 40))
+                            # Ajoute le sprite au groupe de sprites des joueurs
+                            game.all_players.add(game.players[i])
+                            # Incrémente i
+                            i += 1
+                            game.avatar_menu_update(screen, i)
+                    if i == nb_joueur:
+                        #  i = au nombre de joueurs, tous les joueurs ont un avatar
+                        # Lancement du timer et création de la map
+                        game.call_map_and_timer()
+
             # appliquer le backrgound et créer la game a chaque lancement de parti
             if button_2_rect.collidepoint(event.pos) or button_3_rect.collidepoint(event.pos) or button_4_rect.collidepoint(event.pos):
                 # Appliquer le background
                 screen.fill((56, 135, 0))
                 # Lance la partie avec le nombre de joueurs choisis
                 game = Game(nb_joueur)
-                # Charge les rochers
-                game.update(screen)
+                game_status = True
+                # Créer les joueurs avec l'architecture de base
+                game.create_player()
+                # Affiche le menu de choix d'avatar
+                game.avatar_menu_update(screen, i)
             if button_replay.collidepoint(event.pos) and (end_game_lost or end_game_win):
+                # Si le joueur clic sur le bouton replay
+                # Remet à False toutes les variables de victoires et de partie en cours
                 end_game_win = False
                 end_game_lost = False
                 music_win = False
                 music_lost = False
 
-        if game_status:
+        if game_status and game.avatar_set:
             # detecter si un joueur appuie sur une touche
             if event.type == pygame.KEYDOWN:
                 # Joueur 1
-                if event.key == pygame.K_q:
+                if event.key == pygame.K_LSHIFT:
                     # Le joueur 1 appuis sur A => Pose une bombe
                     game.players[0].drop_bomb()
                 # Joueur 2
-                elif event.key == pygame.K_u:
+                elif event.key == pygame.K_RETURN:
                     # Le joueur 2 appuis sur U => Pose une bombe
                     game.players[1].drop_bomb()
                 # Joueur 3
@@ -255,3 +306,24 @@ while running:
             # detecter si un joueur lache une touche
             elif event.type == pygame.KEYUP:
                 game.pressed[event.key] = False
+                
+            # detecter si le joueur utilise une gachette
+            if event.type == pygame.JOYBUTTONDOWN:
+                if event.button == 4 or event.button == 5:
+                    game.players[0].drop_bomb()
+            
+            # detecter si le joueur utilise le pad
+            if event.type == pygame.JOYHATMOTION:
+                if event.value[0] == 1:
+                    # on apelle 6 fois la fonction moove car sinon le joueur ce deplace trop lentement
+                    for i in range(6):
+                        game.players[0].moove("d")
+                if event.value[0] == -1:
+                    for i in range(6):
+                        game.players[0].moove("q")
+                if event.value[1] == -1:
+                    for i in range(6):
+                        game.players[0].moove("s")
+                if event.value[1] == 1:
+                    for i in range(6):
+                        game.players[0].moove("z")
